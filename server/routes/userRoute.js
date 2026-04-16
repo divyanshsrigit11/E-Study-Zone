@@ -3,6 +3,7 @@ const User = require('../models/User')
 const routes = express.Router();
 const jwt = require('jsonwebtoken')
 const Skill = require('../models/Skill');
+const AddContent = require('../models/Content');
 
 //for user registration
 routes.post('/register', async(req, res) => {
@@ -261,6 +262,81 @@ routes.put('/update-profile/:id', async (req, res) => {
 });
 
 // get all trainer only
+routes.get('/getuser/trainer/get', async (req, res) => {
+    try {
+        const data = await User.find({ role: "Trainer" });
+        res.json({ msg: "Trainers fetched successfully", data: data });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Trainers not fetched" });
+    }
+});
 
+
+// add content (Draft or Publish)
+routes.post('/content/add/:userId', async (req, res) => {
+    try {
+        const { skillId, file, status } = req.body;
+
+        const newContent = new AddContent({
+            skillId: skillId,
+            file: file,
+            userId: req.params.userId,
+            status: status
+        });
+
+        await newContent.save();
+        res.json({ msg: `Content successfully saved as ${status}!` });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to save content" });
+    }
+});
+
+// search published content by keyword (Trainer name or Skill name)
+routes.get('/content/search', async (req, res) => {
+    try {
+        const keyword = req.query.q?.toLowerCase() || '';
+
+        // 1. Fetch published content & populate ONLY the User
+        const contents = await AddContent.find({ status: 'publish' })
+            .populate('userId', 'name email');
+
+        // 2. Fetch ALL skill documents to map the sub-document IDs manually
+        const allSkillDocs = await Skill.find();
+        
+        // 3. Create a dictionary (map) of { "subdocument_id" : "Skill Name" }
+        const skillMap = {};
+        allSkillDocs.forEach(doc => {
+            if (doc.skills && doc.skills.length > 0) {
+                doc.skills.forEach(skill => {
+                    skillMap[skill._id.toString()] = skill.name;
+                });
+            }
+        });
+
+        // 4. Filter the results
+        const filteredContents = contents.filter(content => {
+            const trainerName = content.userId?.name?.toLowerCase() || '';
+            
+            // Lookup the actual skill name using our map
+            const actualSkillName = skillMap[content.skillId?.toString()] || '';
+            const skillNameLower = actualSkillName.toLowerCase();
+            
+            return trainerName.includes(keyword) || skillNameLower.includes(keyword);
+        });
+
+        // 5. Attach the plain string 'skillName' to the final response
+        const formattedContents = filteredContents.map(content => ({
+            ...content.toObject(),
+            skillName: skillMap[content.skillId?.toString()] || 'Unknown Skill'
+        }));
+
+        res.json({ msg: "Search successful", data: formattedContents });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to search content" });
+    }
+});
 
 module.exports = routes;

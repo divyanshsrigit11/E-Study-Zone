@@ -6,6 +6,7 @@ import SearchContent from './SearchContent';
 import MyContent from './MyContent';
 import ChangePassword from './ChangePassword';
 import EditProfile from './EditProfile';
+import HandshakeRequest from './HandshakeRequest'; 
 
 const UserDashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -22,6 +23,7 @@ const UserDashboard = () => {
     { name: 'Search Content', icon: 'bi-search' },
     { name: 'My Content', icon: 'bi-collection-play' },
     { name: 'Change Password', icon: 'bi-key' },
+    { name: 'Handshake Request', icon: 'bi-hand-index-thumb' },
   ];
 
   return (
@@ -70,6 +72,7 @@ const UserDashboard = () => {
         {activeView === 'Search Content' && <SearchContent />}
         {activeView === 'My Content' && <MyContent />}
         {activeView === 'Change Password' && <ChangePassword />}
+        {activeView === 'Handshake Request' && <HandshakeRequest />}
         {activeView === 'Edit Profile' && <EditProfile setActiveView={setActiveView} />}
       </div>
 
