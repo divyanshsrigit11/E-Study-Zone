@@ -1,41 +1,40 @@
-import React from 'react'
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import TrainerProfile from '../trainer/TrainerProfile';
-const adminDashboard = () => {
+import ManageUsers from './ManageUsers'; // We will build this next!
 
+const AdminDashboard = () => {
     const [collapsed, setCollapsed] = useState(false);
-    const [activeView, setActiveView] = useState('Profile');
+    const [activeView, setActiveView] = useState('Manage Users');
     const navigate = useNavigate();
   
     const handleLogout = () => {
       localStorage.clear();
-      navigate('/');
+      navigate('/admin-login');
     };
   
     const menuItems = [
-      { name: 'Profile', icon: 'bi-person-badge' },
-      { name: 'Manage Users', icon: 'bi-plus-circle' },
-      { name: 'Manage Content', icon: 'bi-cloud-upload' },
-      { name: 'Change Password', icon: 'bi-shield-lock' },
-      { name: 'Manage Handshake Request', icon: 'bi-hand-index-thumb' },
+      { name: 'Dashboard Overview', icon: 'bi-pie-chart-fill' },
+      { name: 'Manage Users', icon: 'bi-people-fill' },
+      { name: 'Content Moderation', icon: 'bi-shield-check' },
+      { name: 'System Settings', icon: 'bi-gear-fill' },
     ];
 
   return (
     <div className="dashboard-wrapper d-flex" style={{ height: '100vh', overflow: 'hidden' }}>
-      <div className={`sidebar bg-dark text-white d-flex flex-column transition-all ${collapsed ? 'collapsed' : ''}`} style={{ width: collapsed ? '80px' : '250px', transition: 'width 0.3s' }}>
-        <div className="p-3 text-center border-bottom border-secondary d-flex justify-content-between align-items-center">
-          <h4 className={`mb-0 ${collapsed ? 'd-none' : ''}`}>Trainer</h4>
+      <div className={`sidebar bg-dark text-white d-flex flex-column transition-all ${collapsed ? 'collapsed' : ''}`} style={{ width: collapsed ? '80px' : '260px', transition: 'width 0.3s' }}>
+        <div className="p-4 text-center border-bottom border-secondary d-flex justify-content-between align-items-center">
+          <h5 className={`mb-0 fw-bold text-danger ${collapsed ? 'd-none' : ''}`}>ADMIN PANEL</h5>
           <button className="btn btn-sm btn-outline-light border-0" onClick={() => setCollapsed(!collapsed)}>
             <i className="bi bi-list fs-5"></i>
           </button>
         </div>
+        
         <div className="flex-grow-1 pt-3">
           {menuItems.map((item, index) => (
             <div 
               key={index} 
-              className={`p-3 d-flex align-items-center text-white text-decoration-none ${activeView === item.name ? 'bg-primary' : ''}`} 
-              style={{ cursor: 'pointer' }}
+              className={`p-3 mx-2 my-1 rounded-3 d-flex align-items-center text-white text-decoration-none ${activeView === item.name ? 'bg-danger shadow-sm' : ''}`} 
+              style={{ cursor: 'pointer', transition: 'all 0.2s' }}
               onClick={() => setActiveView(item.name)}
             >
               <i className={`bi ${item.icon} fs-5 ${collapsed ? 'mx-auto' : 'me-3'}`}></i>
@@ -43,38 +42,39 @@ const adminDashboard = () => {
             </div>
           ))}
         </div>
-        <div className="p-3 text-danger d-flex align-items-center" style={{ cursor: 'pointer' }} onClick={handleLogout}>
-          <i className={`bi bi-box-arrow-right fs-5 ${collapsed ? 'mx-auto' : 'me-3'}`}></i>
-          <span className={collapsed ? 'd-none' : ''}>Logout</span>
+
+        <div className="p-4 mt-auto border-top border-secondary text-white-50 d-flex align-items-center transition-hover" style={{ cursor: 'pointer' }} onClick={handleLogout}>
+          <i className={`bi bi-box-arrow-right fs-5 ${collapsed ? 'mx-auto text-danger' : 'me-3 text-danger'}`}></i>
+          <span className={`fw-bold ${collapsed ? 'd-none' : ''}`}>Secure Logout</span>
         </div>
       </div>
 
       <div className="main-content flex-grow-1 bg-light" style={{ overflowY: 'auto' }}>
-        <nav className="navbar navbar-light bg-white shadow-sm px-4 py-3">
-          <span className="navbar-brand mb-0 h4 fw-bold text-danger">Welcome to E-study-zone</span>
+        <nav className="navbar navbar-light bg-white shadow-sm px-4 py-3 d-flex justify-content-between">
+          <span className="navbar-brand mb-0 h4 fw-bold text-dark">E-Study Zone <span className="text-danger">Admin Control</span></span>
           <div className="d-flex align-items-center">
-            <span className="me-3 d-none d-md-inline small text-muted fw-bold">Trainer Portal</span>
+            <span className="badge bg-danger rounded-pill px-3 py-2 shadow-sm me-3">Super Admin</span>
             <img 
-              src="https://ui-avatars.com/api/?name=pankaj&background=0d6efd&color=fff" 
+              src="https://ui-avatars.com/api/?name=Admin&background=dc3545&color=fff" 
               alt="Profile" 
               className="rounded-circle shadow-sm"
-              style={{ width: '40px', cursor: 'pointer' }}
-              onClick={() => setActiveView('Profile')} 
+              style={{ width: '45px' }}
             />
           </div>
         </nav>
         
-        {/* CONDITIONAL RENDERING HERE */}
-        <div className="p-3">
-          {activeView === 'Profile' && <TrainerProfile />}
-          {activeView === 'Add Skills' && <AddSkills />}
-          {activeView === 'Add Content' && <AddContent />}
-          {activeView === 'Change Password' && <ChangePassword />}
-          {activeView === 'Handshake Request' && <HandshakeRequest />}
+        <div className="p-4">
+          {/* Conditional Rendering of Admin Components */}
+          {activeView === 'Manage Users' && <ManageUsers />}
+          
+          {/* Placeholders for future components */}
+          {activeView === 'Dashboard Overview' && <h4>Dashboard Overview Coming Soon...</h4>}
+          {activeView === 'Content Moderation' && <h4>Content Moderation Coming Soon...</h4>}
+          {activeView === 'System Settings' && <h4>System Settings Coming Soon...</h4>}
         </div>
       </div>
     </div>
   );
 }
 
-export default adminDashboard
+export default AdminDashboard;

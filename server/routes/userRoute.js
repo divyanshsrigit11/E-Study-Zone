@@ -4,6 +4,25 @@ const routes = express.Router();
 const jwt = require('jsonwebtoken')
 const Skill = require('../models/Skill');
 const AddContent = require('../models/Content');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const Handshake = require('../models/Handshake');
+
+// configuring multer storage
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const dir = './uploads/';
+        cb(null, './uploads/'); 
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir, { recursive: true }); 
+        }
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname)); 
+    }
+});
+const upload = multer({ storage: storage });
 
 //for user registration
 routes.post('/register', async(req, res) => {
@@ -80,7 +99,7 @@ routes.get('/block/:id', async(req, res) => {
 })
 
 // routes to un-block the user
-routes.get('/block/:id', async(req, res) => {
+routes.get('/unblock/:id', async(req, res) => {
     try {
         const data = await User.findByIdAndUpdate(req.params.id, {status: 'active'});
         res.json({msg: "Data fetched", data:data})
@@ -274,13 +293,76 @@ routes.get('/getuser/trainer/get', async (req, res) => {
 
 
 // add content (Draft or Publish)
-routes.post('/content/add/:userId', async (req, res) => {
+// routes.post('/content/add/:userId', async (req, res) => {
+//     try {
+//         const { skillId, file, status } = req.body;
+
+//         const newContent = new AddContent({
+//             skillId: skillId,
+//             file: file,
+//             userId: req.params.userId,
+//             status: status
+//         });
+
+//         await newContent.save();
+//         res.json({ msg: `Content successfully saved as ${status}!` });
+//     } catch (er) {
+//         console.error(er);
+//         res.status(500).json({ msg: "Failed to save content" });
+//     }
+// });
+
+// search published content by keyword (Trainer name or Skill name)
+routes.get('/content/search', async (req, res) => {
     try {
-        const { skillId, file, status } = req.body;
+        const keyword = req.query.q?.toLowerCase() || '';
+
+        const contents = await AddContent.find({ status: 'publish' })
+            .populate('userId', 'name email');
+
+        const allSkillDocs = await Skill.find();
+        
+        const skillMap = {};
+        allSkillDocs.forEach(doc => {
+            if (doc.skills && doc.skills.length > 0) {
+                doc.skills.forEach(skill => {
+                    skillMap[skill._id.toString()] = skill.name;
+                });
+            }
+        });
+
+        const filteredContents = contents.filter(content => {
+            const trainerName = content.userId?.name?.toLowerCase() || '';
+            
+            const actualSkillName = skillMap[content.skillId?.toString()] || '';
+            const skillNameLower = actualSkillName.toLowerCase();
+            
+            return trainerName.includes(keyword) || skillNameLower.includes(keyword);
+        });
+
+        const formattedContents = filteredContents.map(content => ({
+            ...content.toObject(),
+            skillName: skillMap[content.skillId?.toString()] || 'Unknown Skill'
+        }));
+
+        res.json({ msg: "Search successful", data: formattedContents });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to search content" });
+    }
+});
+
+routes.post('/content/add/:userId', upload.single('file'), async (req, res) => {
+    try {
+        const { skillId, status } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ msg: "Please upload a file!" });
+        }
 
         const newContent = new AddContent({
             skillId: skillId,
-            file: file,
+            file: req.file.filename, 
             userId: req.params.userId,
             status: status
         });
@@ -293,49 +375,202 @@ routes.post('/content/add/:userId', async (req, res) => {
     }
 });
 
-// search published content by keyword (Trainer name or Skill name)
-routes.get('/content/search', async (req, res) => {
+// for handshake requests
+// search trainers by skill name or trainer name (for learner)
+routes.get('/trainers/search', async (req, res) => {
     try {
         const keyword = req.query.q?.toLowerCase() || '';
+        if (!keyword) return res.json({ data: [] });
 
-        // 1. Fetch published content & populate ONLY the User
-        const contents = await AddContent.find({ status: 'publish' })
-            .populate('userId', 'name email');
+        // Fetch all skills and populate the Trainer's details
+        const allSkillDocs = await Skill.find().populate('userId', 'name _id role');
 
-        // 2. Fetch ALL skill documents to map the sub-document IDs manually
-        const allSkillDocs = await Skill.find();
+        let matchedTrainers = [];
+
+        // Loop through docs and array to find matches
+        allSkillDocs.forEach(doc => {
+            if (doc.userId && doc.userId.role === 'Trainer') {
+                
+                // Grab the trainer's name and convert to lowercase for comparison
+                const trainerName = doc.userId.name.toLowerCase();
+
+                doc.skills.forEach(skill => {
+                    const skillName = skill.name.toLowerCase();
+                    
+                    // Match if the keyword is in the SKILL NAME - OR - the TRAINER NAME
+                    if (skill.status === 'active' && (skillName.includes(keyword) || trainerName.includes(keyword))) {
+                        matchedTrainers.push({
+                            skillId: skill._id,
+                            skillName: skill.name,
+                            status: skill.status, 
+                            trainerName: doc.userId.name,
+                            trainerId: doc.userId._id
+                        });
+                    }
+                });
+            }
+        });
+
+        res.json({ msg: "Search successful", data: matchedTrainers });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to search trainers" });
+    }
+});
+
+// create handshake request
+// 1. CREATE HANDSHAKE REQUEST (Now includes Skill Data)
+routes.post('/handshake/send', async (req, res) => {
+    try {
+        const { learnerId, trainerId, skillId, skillName } = req.body;
+        // console.log("INCOMING HANDSHAKE DATA:", req.body);
+
+        // Check if request exists for THIS specific trainer AND THIS specific skill
+        const existingReq = await Handshake.findOne({ learnerId, trainerId, skillId });
+        if (existingReq) {
+            return res.status(400).json({ msg: `You already sent a request for ${skillName} to this trainer!` });
+        }
+
+        const newHandshake = new Handshake({
+            learnerId,
+            trainerId,
+            skillId,
+            skillName, // Save the name so we don't have to run complex population queries later!
+            status: 'pending'
+        });
+
+        await newHandshake.save();
+        res.json({ msg: "Handshake request sent successfully!" });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to send request" });
+    }
+});
+
+// get history of handshake request for trainer
+routes.get('/handshake/learner/:id', async (req, res) => {
+    try {
+        const history = await Handshake.find({ learnerId: req.params.id })
+            .populate('trainerId', 'name email phone'); // Get trainer details
+        res.json({ data: history });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to fetch handshake history" });
+    }
+});
+
+// for trainers to see incoming handshake requests
+// GET TRAINER'S HANDSHAKE REQUESTS & CONNECTIONS
+routes.get('/handshake/trainer/:id', async (req, res) => {
+    try {
+        const requests = await Handshake.find({ trainerId: req.params.id })
+            .populate('learnerId', 'name email qualification'); 
+            
+        res.json({ data: requests });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to fetch trainer handshakes" });
+    }
+});
+
+// UPDATE HANDSHAKE STATUS (Accept / Reject)
+routes.put('/handshake/update/:id', async (req, res) => {
+    try {
+        const { status } = req.body; // Expects 'accepted' or 'rejected'
         
-        // 3. Create a dictionary (map) of { "subdocument_id" : "Skill Name" }
+        await Handshake.findByIdAndUpdate(req.params.id, { status: status });
+        
+        res.json({ msg: `Connection request ${status}!` });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to update handshake status" });
+    }
+});
+
+// my content for user
+routes.get('/learner/content/:learnerId', async (req, res) => {
+    try {
+        const handshakes = await Handshake.find({
+            learnerId: req.params.learnerId,
+            status: 'accepted'
+        }).populate('trainerId', 'name');
+
+        if (!handshakes || handshakes.length === 0) {
+            return res.json({ data: [] });
+        }
+
+        let accessibleContent = [];
+
+        for (let hs of handshakes) {
+            const contents = await AddContent.find({
+                userId: hs.trainerId._id,
+                skillId: hs.skillId,
+                status: 'publish'
+            });
+
+            contents.forEach(item => {
+                accessibleContent.push({
+                    ...item.toObject(),
+                    trainerName: hs.trainerId.name,
+                    skillName: hs.skillName
+                });
+            });
+        }
+
+        res.json({ msg: "Content fetched", data: accessibleContent });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to fetch accessible content" });
+    }
+});
+
+// Get all uploaded content for a specific trainer
+routes.get('/content/trainer/:userId', async (req, res) => {
+    try {
+        const contents = await AddContent.find({ userId: req.params.userId });
+
+        const allSkillDocs = await Skill.find();
         const skillMap = {};
         allSkillDocs.forEach(doc => {
-            if (doc.skills && doc.skills.length > 0) {
+            if (doc.skills) {
                 doc.skills.forEach(skill => {
                     skillMap[skill._id.toString()] = skill.name;
                 });
             }
         });
 
-        // 4. Filter the results
-        const filteredContents = contents.filter(content => {
-            const trainerName = content.userId?.name?.toLowerCase() || '';
-            
-            // Lookup the actual skill name using our map
-            const actualSkillName = skillMap[content.skillId?.toString()] || '';
-            const skillNameLower = actualSkillName.toLowerCase();
-            
-            return trainerName.includes(keyword) || skillNameLower.includes(keyword);
-        });
-
-        // 5. Attach the plain string 'skillName' to the final response
-        const formattedContents = filteredContents.map(content => ({
+        const formattedContents = contents.map(content => ({
             ...content.toObject(),
             skillName: skillMap[content.skillId?.toString()] || 'Unknown Skill'
         }));
 
-        res.json({ msg: "Search successful", data: formattedContents });
+        res.json({ data: formattedContents });
     } catch (er) {
         console.error(er);
-        res.status(500).json({ msg: "Failed to search content" });
+        res.status(500).json({ msg: "Failed to fetch trainer contents" });
+    }
+});
+
+// Update content status (Draft <-> Publish)
+routes.put('/content/status/:id', async (req, res) => {
+    try {
+        const { status } = req.body;
+        await AddContent.findByIdAndUpdate(req.params.id, { status });
+        res.json({ msg: `Content successfully marked as ${status}!` });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to update content status" });
+    }
+});
+
+// Delete content
+routes.delete('/content/:id', async (req, res) => {
+    try {
+        await AddContent.findByIdAndDelete(req.params.id);
+        res.json({ msg: "Content deleted successfully!" });
+    } catch (er) {
+        console.error(er);
+        res.status(500).json({ msg: "Failed to delete content" });
     }
 });
 

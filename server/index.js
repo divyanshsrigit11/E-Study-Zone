@@ -11,6 +11,8 @@ MongoDB();
 // API Started
 app.use('/api/user', require('./routes/userRoute'))
 app.use('/api/admin', require('./routes/adminRoute'))
+// for multer
+app.use('/uploads', express.static('uploads'));
 // API Ended
 
 app.listen(process.env.PORT, () => {

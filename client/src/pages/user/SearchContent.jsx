@@ -1,128 +1,130 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const SearchContent = () => {
+// Accept setActiveView as a prop so we can redirect the user after sending a request
+const SearchContent = ({ setActiveView }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const currentUserId = localStorage.getItem("id");
 
   const handleSearch = async (e) => {
-    e.preventDefault(); // Prevent page reload if triggered via form submission
+    e.preventDefault(); 
     if (!query.trim()) return;
 
     setLoading(true);
     setHasSearched(true);
     
     try {
-      const res = await axios.get(`http://localhost:5000/api/user/content/search?q=${query}`);
+      const res = await axios.get(`http://localhost:5000/api/user/trainers/search?q=${query}`);
       setResults(res.data.data);
     } catch (error) {
       console.error("Search failed", error);
-      alert("Failed to perform search. Please try again.");
+      alert("Failed to perform search.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewContent = (trainerName) => {
-    // Placeholder for your future Handshake logic!
-    alert(`Content Access Locked.\n\nYou must establish a connection (Handshake) with Trainer ${trainerName} to view this material.`);
+  const handleSendRequest = async (trainerId, skillId, skillName) => {
+    try {
+      const res = await axios.post('http://localhost:5000/api/user/handshake/send', {
+        learnerId: currentUserId,
+        trainerId: trainerId,
+        skillId: skillId,     
+        skillName: skillName
+      });
+      alert(res.data.msg);
+      // Redirect to Handshake Request tab to see the pending status
+      if(setActiveView) setActiveView('Handshake Request');
+    } catch (error) {
+      alert(error.response?.data?.msg || "Failed to send request.");
+    }
   };
 
   return (
     <div className="container py-4">
-      
-      {/* Search Bar Section */}
-      <div className="row justify-content-center mb-5">
+      <div className="row justify-content-center mb-4">
         <div className="col-md-8 text-center">
-          <h3 className="fw-bold mb-3 text-dark">Find New Courses</h3>
-          
+          <h3 className="fw-bold mb-3 text-dark">Find Expert Trainers</h3>
           <form onSubmit={handleSearch}>
-            <div className="input-group input-group-lg shadow-sm mb-4">
+            <div className="input-group input-group-lg shadow-sm mb-3">
               <span className="input-group-text bg-white border-end-0">
                 <i className="bi bi-search text-muted"></i>
               </span>
               <input 
                 type="text" 
+                id="trainerSearch"  
+                name="trainerSearch"
+                aria-label="Search for a skill or trainer"
                 className="form-control border-start-0" 
-                placeholder="Search by Skill (e.g., React) or Trainer Name..." 
+                placeholder="Search for a skill (e.g., React, Java)..." 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-              <button 
-                type="submit" 
-                className="btn btn-danger px-4 fw-bold"
-                disabled={loading}
-              >
+              <button type="submit" className="btn btn-danger px-4 fw-bold" disabled={loading}>
                 {loading ? 'Searching...' : 'Search'}
               </button>
             </div>
           </form>
-
-          {!hasSearched && (
-            <div className="alert alert-light text-muted border border-dashed rounded-4">
-              <i className="bi bi-info-circle me-2"></i> Start typing to browse the global content library.
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Search Results Section */}
+      {/* Results Table */}
       {hasSearched && !loading && (
-        <div className="mt-4">
-          <h5 className="fw-bold mb-4 text-secondary">
-            Search Results {results.length > 0 && <span className="badge bg-danger rounded-pill ms-2">{results.length}</span>}
-          </h5>
-
-          {results.length === 0 ? (
-            <div className="text-center py-5 text-muted bg-white shadow-sm rounded-4 border-0">
-              <i className="bi bi-search fs-1 d-block mb-3 opacity-50"></i>
-              <p className="fs-5">No content found for "<strong>{query}</strong>"</p>
-              <p className="small">Try searching for a different skill or trainer.</p>
-            </div>
-          ) : (
-            <div className="row g-4">
-              {results.map((item) => (
-                <div className="col-md-6 col-lg-4" key={item._id}>
-                  <div className="card h-100 border-0 shadow-sm rounded-4 transition-hover">
-                    <div className="card-body p-4 d-flex flex-column">
-                      
-                      {/* Badge & Icon Header */}
-                      <div className="d-flex justify-content-between align-items-start mb-3">
-                        <span className="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold">
-                          {item.skillName || 'Unknown Skill'}
-                        </span>
-                        <i className="bi bi-file-earmark-pdf fs-3 text-secondary opacity-50"></i>
-                      </div>
-
-                      {/* Content Details */}
-                      <h5 className="fw-bold text-dark mb-1">
-                        {item.skillName || 'Course Material'} 
-                      </h5>
-                      <p className="text-muted small mb-4">
-                        By Trainer: <span className="fw-bold text-dark text-capitalize">{item.userId?.name || 'Unknown'}</span>
-                      </p>
-
-                      {/* Footer Actions (Pushed to bottom) */}
-                      <div className="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
-                        <small className="text-muted" style={{ fontSize: '0.75rem' }}>
-                          Uploaded: {new Date(item.createdAt).toLocaleDateString()}
-                        </small>
-                        <button 
-                          className="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3"
-                          onClick={() => handleViewContent(item.userId?.name)}
-                        >
-                          <i className="bi bi-lock-fill me-1"></i> View Content
-                        </button>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="card border-0 shadow-sm rounded-4">
+          <div className="card-header bg-white p-4 border-bottom-0">
+            <h5 className="fw-bold mb-0 text-secondary">
+              Search Results <span className="badge bg-danger ms-2">{results.length}</span>
+            </h5>
+          </div>
+          <div className="card-body p-0">
+            {results.length === 0 ? (
+              <div className="text-center py-5 text-muted">
+                <p className="fs-5">No trainers found for "<strong>{query}</strong>"</p>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="table-dark">
+                    <tr>
+                      <th className="ps-4">S.No.</th>
+                      <th>Trainer Name</th>
+                      <th>Trainer ID</th>
+                      <th>Skill</th>
+                      <th>Status</th>
+                      <th className="text-center pe-4">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((item, index) => (
+                      <tr key={index}>
+                        <td className="ps-4 fw-bold text-muted">{index + 1}</td>
+                        <td className="fw-bold text-dark text-capitalize">{item.trainerName}</td>
+                        <td className="font-monospace text-muted small">{item.trainerId}</td>
+                        <td className="fw-bold text-danger">{item.skillName}</td>
+                        <td>
+                          <span className={`badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="text-center pe-4">
+                          <button 
+                            className="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3 w-100"
+                            onClick={() => handleSendRequest(item.trainerId, item.skillId, item.skillName)}
+                            disabled={item.status !== 'active'}
+                          >
+                            <i className="bi bi-person-plus-fill me-1"></i> Send Request
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
