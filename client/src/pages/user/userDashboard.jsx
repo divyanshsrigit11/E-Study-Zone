@@ -81,7 +81,7 @@ const UserDashboard = () => {
 
   // Dynamic Profile Picture Logic
   const profilePic = userData?.picture 
-    ? `http://localhost:5000/uploads/${userData.picture}`
+    ? (userData.picture.startsWith('http') ? userData.picture : `http://localhost:5000/uploads/${userData.picture}`)
     : `https://ui-avatars.com/api/?name=${userData?.name || 'User'}&background=dc3545&color=fff`;
 
   return (

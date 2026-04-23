@@ -7,6 +7,15 @@ const jwt = require('jsonwebtoken');
 const Skill = require('../models/Skill');
 const Setting = require('../models/Setting');
 const Notification = require('../models/Notification');
+const bcrypt = require('bcryptjs'); 
+const rateLimit = require('express-rate-limit');
+
+// Strict limit for Admin login to prevent brute-force attacks
+const adminAuthLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 5, 
+    message: { msg: "Too many admin login attempts. Please try again after 15 minutes." }
+});
 
 // --- AUTH ROUTES ---
 routes.post('/register', async(req,res) => {
@@ -15,22 +24,39 @@ routes.post('/register', async(req,res) => {
         const data = await Admin.findOne({email:email});
         if(data) return res.json({msg: "Duplicate email"});
         
-        const user = await new Admin(req.body);
-        await user.save();
+        // Hash the password before saving
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newAdmin = new Admin({
+            ...req.body,
+            password: hashedPassword
+        });
+
+        await newAdmin.save();
         res.json({msg:"Admin registered Successfully"});
     } catch(er) {
         console.error(er);
-        res.json({msg: "Sorry try again"})
+        res.status(500).json({msg: "Internal Server Error"});
     }
-});
+}); 
 
-routes.post('/login', async(req, res) => {
+routes.post('/login', adminAuthLimiter, async(req, res) => {
     try {
         const { email, password } = req.body;
         const isExist = await Admin.findOne({email:email});
         if(!isExist) return res.json({msg: "Data Not Matched"});
         
-        if(isExist.password == password) {
+        let isMatch = false;
+
+        // Hybrid check for hashed vs plain-text passwords
+        if (isExist.password.startsWith('$2')) {
+            isMatch = await bcrypt.compare(password, isExist.password);
+        } else {
+            isMatch = (password === isExist.password);
+        }
+
+        if(isMatch) {
             const token = jwt.sign({id:isExist._id}, process.env.JWT_SECRET, {expiresIn: "1d"});
             res.json({msg: "Login Successfully", data:{
                 token:token,
@@ -42,8 +68,8 @@ routes.post('/login', async(req, res) => {
             res.json({msg: "Password Not Matched"});
         }
     } catch(er) {
-        console.error("Sorry try again");
-        res.json({msg: "Sorry try again"});
+        console.error(er);
+        res.status(500).json({msg: "Sorry try again"});
     }
 });
 

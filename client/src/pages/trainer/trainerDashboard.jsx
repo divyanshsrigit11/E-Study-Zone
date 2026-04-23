@@ -81,7 +81,7 @@ const TrainerDashboard = () => {
 
   // Dynamic Profile Picture Logic (Blue Theme for Trainer)
   const profilePic = userData?.picture 
-    ? `http://localhost:5000/uploads/${userData.picture}`
+    ? (userData.picture.startsWith('http') ? userData.picture : `http://localhost:5000/uploads/${userData.picture}`)
     : `https://ui-avatars.com/api/?name=${userData?.name || 'Trainer'}&background=0d6efd&color=fff`;
 
   return (

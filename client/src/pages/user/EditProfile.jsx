@@ -35,9 +35,10 @@ const EditProfile = ({ setActiveView }) => {
           });
 
           if (user.picture) {
-            setPreviewUrl(`http://localhost:5000/uploads/${user.picture}`);
+              const isCloudinary = user.picture.startsWith('http');
+              setPreviewUrl(isCloudinary ? user.picture : `http://localhost:5000/uploads/${user.picture}`);
           } else {
-            setPreviewUrl(`https://ui-avatars.com/api/?name=${user.name}&background=e9ecef&color=343a40&size=150`);
+              setPreviewUrl(`https://ui-avatars.com/api/?name=${user.name}&background=e9ecef&color=343a40&size=150`);
           }
         }
       } catch (error) { console.error(error); } finally { setLoading(false); }

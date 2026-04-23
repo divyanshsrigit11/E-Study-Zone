@@ -102,8 +102,13 @@ const AddContent = () => {
               {contents.map(c => (
                 <tr key={c._id}>
                   <td className="ps-4 fw-bold text-dark">
-                    <a href={`http://localhost:5000/uploads/${c.file}`} target="_blank" rel="noreferrer" className="text-decoration-none">
-                      {c.file.substring(0, 30)}...
+                    <a 
+                      href={c.file.startsWith('http') ? c.file : `http://localhost:5000/uploads/${c.file}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="text-decoration-none text-primary"
+                    >
+                      <i className="bi bi-box-arrow-up-right me-2"></i> View Material
                     </a>
                   </td>
                   <td className="text-muted">{c.skillName}</td>

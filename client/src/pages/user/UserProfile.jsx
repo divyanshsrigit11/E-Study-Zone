@@ -25,7 +25,7 @@ const UserProfile = ({ setActiveView }) => {
   const roleBadgeText = isTrainer ? 'Expert Trainer' : 'Learner Portal';
 
   const profilePic = user.picture 
-    ? `http://localhost:5000/uploads/${user.picture}` 
+    ? (user.picture.startsWith('http') ? user.picture : `http://localhost:5000/uploads/${user.picture}`)
     : `https://ui-avatars.com/api/?name=${user.name}&background=${isTrainer ? '0d6efd' : 'dc3545'}&color=fff&size=150`;
 
   const dateJoined = user.createdAt 

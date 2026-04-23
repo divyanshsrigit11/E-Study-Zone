@@ -76,10 +76,15 @@ const ContentModeration = () => {
                   {filteredContent.map((content) => (
                     <tr key={content._id}>
                       <td className="ps-4 text-primary small fw-bold">
-                         <i className="bi bi-file-earmark-text me-2 text-muted"></i> 
-                         <a href={`http://localhost:5000/uploads/${content.file}`} target="_blank" rel="noreferrer" className="text-decoration-none">
-                           {content.file.length > 25 ? content.file.substring(0, 25) + '...' : content.file}
-                         </a>
+                        <i className="bi bi-file-earmark-text me-2 text-muted"></i> 
+                        <a 
+                          href={content.file.startsWith('http') ? content.file : `http://localhost:5000/uploads/${content.file}`} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="text-decoration-none"
+                        >
+                          View Document
+                        </a>
                       </td>
                       <td className="text-capitalize small fw-bold text-dark">{content.userId?.name || 'Unknown User'}</td>
                       <td className="text-uppercase text-secondary small fw-bold">{content.skillName}</td>

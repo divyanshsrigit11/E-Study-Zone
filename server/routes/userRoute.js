@@ -5,11 +5,22 @@ const jwt = require('jsonwebtoken');
 const Skill = require('../models/Skill');
 const AddContent = require('../models/Content');
 const multer = require('multer');
+const { uploadProfile, uploadContent } = require('../middleware/upload');
 const path = require('path');
 const fs = require('fs');
 const Handshake = require('../models/Handshake');
 const Notification = require('../models/Notification');
 const Setting = require('../models/Setting');
+// rate limiter for auth routes
+const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 5, 
+    message: { msg: "Too many attempts from this IP, please try again after 15 minutes." }
+});
+
 
 // configuring multer storage
 const storage = multer.diskStorage({
@@ -28,7 +39,6 @@ const upload = multer({ storage: storage });
 
 // ==========================================
 // THE MAINTENANCE INTERCEPTOR & GLOBAL ROUTES
-// ==========================================
 routes.use(async (req, res, next) => {
     const exemptRoutes = ['/login', '/register', '/settings', '/notifications'];
     const isExempt = exemptRoutes.some(route => req.path.includes(route));
@@ -66,14 +76,10 @@ routes.get('/notifications', async (req, res) => {
 });
 
 // ==========================================
-// STANDARD USER ROUTES
-// ==========================================
-
-// ==========================================
 // STANDARD USER ROUTES (WITH APPROVAL LOGIC)
 // ==========================================
 
-routes.post('/register', async(req, res) => {
+routes.post('/register', authLimiter, async(req, res) => {
     try {
         const {name, email, password, qualification, role} = req.body;
         const user = await User.findOne({email:email});
@@ -149,34 +155,46 @@ routes.get('/unblock/:id', async(req, res) => {
     }
 });
 
-routes.post('/login', async(req, res) => {
+routes.post('/login', authLimiter, async(req, res) => {
     try {
-        const { email, password } = req.body
-        const data = await User.findOne({ email:email })
+        const { email, password } = req.body;
+        const data = await User.findOne({ email: email });
         
         if(!data) {
             return res.json({msg: "Email is incorrect"});
         }
         
-        if(data.password == password) {
+        // --- THE HYBRID PASSWORD CHECK ---
+        let isMatch = false;
+        
+        // bcrypt hashes always start with "$2a$", "$2b$", or "$2y$"
+        if (data.password.startsWith('$2')) {
+            // Compare the plain text input against the hashed DB password
+            isMatch = await bcrypt.compare(password, data.password);
+        } else {
+            // Fallback for your old test accounts with plain-text passwords
+            isMatch = (password === data.password);
+        }
+        
+        if(isMatch) {
             if (data.role === 'Trainer' && data.status === 'inactive') {
                 return res.json({msg: "Your account is pending admin approval."});
             }
 
-            const token = jwt.sign({id:data._id}, process.env.JWT_SECRET, {expiresIn:"1d"})
+            const token = jwt.sign({id:data._id}, process.env.JWT_SECRET, {expiresIn:"1d"});
             res.json({msg: "Login Successfully", data:{
                 token,
-                id:data._id,
-                role:data.role,
-                email:data.email,
-                name:data.name
+                id: data._id,
+                role: data.role,
+                email: data.email,
+                name: data.name
             }});
         } else {
             return res.json({msg: "Password is incorrect"});
         }
     }
     catch(er) {
-        console.log(er);
+        console.log("Login Error:", er);
         res.json({msg: "Try again Later"});
     }
 });
@@ -290,28 +308,28 @@ routes.post('/change-password/:id', async (req, res) => {
 });
 
 // Profile update WITH picture upload support
-routes.put('/update-profile/:id', upload.single('picture'), async (req, res) => {
+routes.put('/update-profile/:id', uploadProfile.single('picture'), async (req, res) => {
     try {
-        const { name, phone, dob, fatherName, address, pinCode, highSchool, board } = req.body;
-        let updateData = { name, phone, dob, fatherName, address, pinCode, highSchool, board };
+        const updateData = {
+            name: req.body.name,
+            phone: req.body.phone,
+            dob: req.body.dob,
+            fatherName: req.body.fatherName,
+            address: req.body.address,
+            pinCode: req.body.pinCode,
+            highSchool: req.body.highSchool,
+            board: req.body.board
+        };
 
         if (req.file) {
-            updateData.picture = req.file.filename;
+            updateData.picture = req.file.path; 
         }
+
+        await User.findByIdAndUpdate(req.params.id, updateData);
+        res.json({ msg: "Profile updated successfully!" });
         
-        const updatedUser = await User.findByIdAndUpdate(
-            req.params.id,
-            { $set: updateData },
-            { new: true }
-        );
-
-        if (!updatedUser) {
-            return res.status(404).json({ msg: "User not found" });
-        }
-
-        res.json({ msg: "Profile updated successfully", data: updatedUser });
-    } catch (er) {
-        console.error(er);
+    } catch (error) {
+        console.error("Profile Update Error:", error);
         res.status(500).json({ msg: "Failed to update profile" });
     }
 });
@@ -359,14 +377,15 @@ routes.get('/content/search', async (req, res) => {
     }
 });
 
-routes.post('/content/add/:userId', upload.single('file'), async (req, res) => {
+routes.post('/content/add/:userId', uploadContent.single('file'), async (req, res) => {
     try {
         const { skillId, status } = req.body;
         if (!req.file) return res.status(400).json({ msg: "Please upload a file!" });
 
         const newContent = new AddContent({
             skillId: skillId,
-            file: req.file.filename, 
+            // CRITICAL FIX: Use req.file.path to save the live Cloudinary URL, not filename!
+            file: req.file.path, 
             userId: req.params.userId,
             status: status
         });

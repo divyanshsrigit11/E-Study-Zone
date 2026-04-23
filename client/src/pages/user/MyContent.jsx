@@ -33,14 +33,21 @@ const MyContent = () => {
                             <div className="card border-0 shadow-sm rounded-4 h-100 p-3">
                                 <div className="d-flex align-items-center mb-3">
                                     <div className="bg-danger bg-opacity-10 p-2 rounded text-danger me-3">
-                                        <i className="bi bi-file-earmark-pdf-fill fs-4"></i>
+                                        <i className={`bi ${item.file.endsWith('.pdf') ? 'bi-file-earmark-pdf-fill' : 'bi-image-fill'} fs-4`}></i>
                                     </div>
-                                    <h6 className="fw-bold text-truncate mb-0" title={item.file}>{item.file}</h6>
+                                    <h6 className="fw-bold text-truncate mb-0">Study Material</h6>
                                 </div>
+                                
                                 <p className="text-muted small mb-1">Trainer: <span className="fw-bold text-dark">{item.trainerName}</span></p>
                                 <p className="text-muted small mb-3">Skill: {item.skillName}</p>
-                                <a href={`http://localhost:5000/uploads/${item.file}`} target="_blank" rel="noreferrer" className="btn btn-danger btn-sm rounded-pill fw-bold mt-auto w-100">
-                                    <i className="bi bi-cloud-arrow-down-fill me-1"></i> Access File
+                                
+                                <a 
+                                    href={item.file.startsWith('http') ? item.file : `http://localhost:5000/uploads/${item.file}`} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="btn btn-danger btn-sm rounded-pill fw-bold mt-auto w-100"
+                                >
+                                    <i className="bi bi-eye-fill me-1"></i> Access Content
                                 </a>
                             </div>
                         </div>
