@@ -1,94 +1,86 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../../AuthPage.css';
-import logo from '../../assets/logo.webp'
+import logo from '../../assets/logo.webp';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
     const navigate = useNavigate();
-
-    const [data, setData] = useState({
-        email:'',
-        password:''
-    });
+    const [credentials, setCredentials] = useState({ email: '', password: '' });
 
     const handleChange = (e) => {
-        setData(() => ({...data, [e.target.name]:e.target.value}))
-    }
-    const handleSubmit = async(e) => {
-        e.preventDefault();
-        try{
-            const res = await axios.post('http://localhost:5000/api/user/login', data);
-            alert(res.data.msg);
+        setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    };
 
-            if(res.data.msg=="Login Successfully"){
-            localStorage.setItem("name", res.data.data.name);
-            localStorage.setItem("email", res.data.data.email);
-            localStorage.setItem("id", res.data.data.id);
-            localStorage.setItem("role", res.data.data.role);
-            localStorage.setItem("token", res.data.data.token);
-                if(res.data.data.role=="Trainer") {
-                    navigate('/trainerdashboard')
-                } else if(res.data.data.role=="Learner") {
-                    navigate('/userdashboard')
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await axios.post('http://localhost:5000/api/user/login', credentials);
+            
+            if (res.data.msg === "Login Successfully") {
+                // Save token and ID
+                localStorage.setItem("token", res.data.data.token);
+                localStorage.setItem("id", res.data.data.id);
+                
+                // Route MUST perfectly match the paths defined in App.jsx
+                if (res.data.data.role === 'Trainer') {
+                    navigate('/trainerDashboard');
+                } else {
+                    navigate('/userDashboard');
                 }
+            } else {
+                // Shows backend rejections (e.g., "Password incorrect" or "Pending admin approval")
+                alert(res.data.msg);
             }
-        } catch(er) {
-            console.log(er);
-            alert("Sorry try again later..!!");
+        } catch (error) {
+            console.error("Login Request Failed:", error);
+            alert("Server Error: Check if your backend is running on Port 5000.");
         }
-    }
-        
+    };
+
     return (
         <div className="container-fluid auth-container p-0">
-            <div className="row g-0 w-100">
+            <div className="row g-0 w-100 h-100">
+                
                 {/* Brand Side */}
                 <div className="col-md-6 brand-section d-none d-md-flex">
                     <img src={logo} alt="logo" className="brand-logo" />
-                    <h1 className="display-4 fw-bold">e-study-zone</h1>
-                    <p className="lead">Master your future with organized learning.</p>
-                    <img src="https://illustrations.popsy.co/white/studying.svg" alt="Study" className="illustration-img" />
-                    <footer className='footer mt-auto py-3 text-center '><Link className='text-white' to="/AdminLogin">Admin Login</Link></footer>
+                    <h1 className="fw-bold">e-study-zone</h1>
+                    <p>Welcome back! Pick up right where you left off.</p>
+                    <img src="https://illustrations.popsy.co/white/student-going-to-school.svg" alt="Login" className="illustration-img" />
                 </div>
 
                 {/* Form Side */}
                 <div className="col-md-6 col-12 form-section">
-                    <div className="auth-form-box">
+                    <div className="auth-form-box" style={{ maxWidth: '380px' }}>
                         <div className="mb-4">
-                            <h2 className="fw-bold">Welcome Back!</h2>
-                            <p className="text-muted">Enter your credentials to access your dashboard.</p>
+                            <h2 className="fw-bold mb-0">Welcome Back</h2>
+                            <p className="text-muted small">Please enter your details to sign in.</p>
                         </div>
 
-                        <div className="d-grid gap-2 mb-4">
-                            <button className="btn btn-outline-dark social-btn py-2">
-                                <i className='bx bxl-google text-danger'></i> Sign in with Google
-                            </button>
-                        </div>
-
-                        <div className="text-center mb-4">
-                            <hr className="text-muted" />
-                            <span className="bg-white px-2 small text-muted text-uppercase" style={{marginTop: '-25px', display: 'inline-block', position: 'relative'}}>Or login with email</span>
-                        </div>
-
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleLogin}>
                             <div className="mb-3">
-                                <label className="form-label small fw-bold text-uppercase">Email Address</label>
-                                <input type="email" value={data.email} name="email" className="form-control form-control-lg" placeholder="name@example.com" required onChange={handleChange}/>
+                                <label className="form-label small fw-bold">EMAIL ADDRESS</label>
+                                <input type="email" className="form-control form-control-md bg-light border-0" placeholder="name@example.com" name="email" value={credentials.email} onChange={handleChange} required />
                             </div>
-                            <div className="mb-3">
-                                <div className="d-flex justify-content-between">
-                                    <label className="form-label small fw-bold text-uppercase">Password</label>
-                                    <a href="#" className="text-danger small text-decoration-none">Forgot Password?</a>
-                                </div>
-                                <input type="password" name="password" value={data.password} className="form-control form-control-lg" placeholder="••••••••" required onChange={handleChange}/>
+                            
+                            <div className="mb-4">
+                                <label className="form-label small fw-bold">PASSWORD</label>
+                                <input type="password" className="form-control form-control-md bg-light border-0" placeholder="Enter password" name="password" value={credentials.password} onChange={handleChange} required />
                             </div>
-                            <button type="submit" className="btn btn-danger btn-lg w-100 shadow-sm mt-2">Sign In</button>
+
+                            <button type="submit" className="btn btn-danger btn-md w-100 shadow-sm py-2 fw-bold">Sign In</button>
                         </form>
 
                         <p className="text-center mt-4 small">
-                            New here? <Link to="/register" className="text-danger fw-bold text-decoration-none">Create an account</Link>
+                            Don't have an account? <Link to="/register" className="text-danger fw-bold text-decoration-none">Sign up for free</Link>
                         </p>
+                        
+                        <div className="text-center mt-4 pt-3 border-top">
+                            <Link to="/adminlogin" className="text-muted small text-decoration-none">
+                                <i className="bi bi-shield-lock me-1"></i> Admin Portal Access
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>

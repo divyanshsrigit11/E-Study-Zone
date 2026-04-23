@@ -1,32 +1,31 @@
-import React, { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import React from 'react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-const Login = lazy(() => import('./pages/public/Login'))
-const Register = lazy(() => import('./pages/public/Register'))
-const TrainerDashboard = lazy(() => import('./pages/trainer/trainerDashboard'))
-const UserDashboard = lazy(() => import('./pages/user/userDashboard'))
-const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
+// Standard imports immediately catch missing files and errors
+import Login from './pages/public/Login';
+import Register from './pages/public/Register';
+import TrainerDashboard from './pages/trainer/trainerDashboard'; 
+import UserDashboard from './pages/user/userDashboard';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 const App = () => {
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="d-flex justify-content-center mt-5">Loading...</div>}>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path='/AdminLogin' element={<AdminLogin />} />
-          <Route path='/trainerDashboard' element={<TrainerDashboard />} />
-          <Route path="/userDashboard" element={<UserDashboard />} />
-          <Route path="/adminDashboard" element={<AdminDashboard />} />
-          <Route path="*" element={<div className="text-center mt-5">404 - Page Not Found</div>} /> 
-        </Routes>
-      </Suspense>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/adminlogin" element={<AdminLogin />} />
+        <Route path="/trainerDashboard" element={<TrainerDashboard />} />
+        <Route path="/userDashboard" element={<UserDashboard />} />
+        <Route path="/adminDashboard" element={<AdminDashboard />} />
+        <Route path="*" element={<div className="text-center mt-5 text-danger fw-bold">404 - Page Not Found</div>} /> 
+      </Routes>
     </BrowserRouter>
   )
 }
 
-export default App
+export default App;
 
 // import React from 'react'
 // import {BrowserRouter, Routes, Route} from "react-router-dom"

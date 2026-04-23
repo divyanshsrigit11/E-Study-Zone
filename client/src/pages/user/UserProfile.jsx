@@ -8,151 +8,100 @@ const UserProfile = ({ setActiveView }) => {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!userId) return;
       try {
         const res = await axios.get(`http://localhost:5000/api/user/getuser/${userId}`);
-        if (res.data && res.data.data) {
-          setUser(res.data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch profile", error);
-      } finally {
-        setLoading(false);
-      }
+        setUser(res.data.data);
+      } catch (error) { console.error(error); } finally { setLoading(false); }
     };
-    fetchUserProfile();
+    if(userId) fetchUserProfile();
   }, [userId]);
 
-  if (loading) return <div className="text-center mt-5 text-muted"><div className="spinner-border text-danger me-2" role="status"></div>Loading profile...</div>;
-  if (!user) return <div className="text-center mt-5 text-danger">Profile data not found.</div>;
+  if (loading) return <div className="text-center py-5"><div className="spinner-border text-secondary"></div></div>;
+  if (!user) return <div className="text-center py-5 text-muted">Profile data not found.</div>;
+
+  // FIXED: Bulletproof role check (ignores spaces and capital letters)
+  const isTrainer = user?.role?.toLowerCase().trim() === 'trainer';
+  const themeColor = isTrainer ? 'primary' : 'danger';
+  const roleBadgeText = isTrainer ? 'Expert Trainer' : 'Learner Portal';
+
+  const profilePic = user.picture 
+    ? `http://localhost:5000/uploads/${user.picture}` 
+    : `https://ui-avatars.com/api/?name=${user.name}&background=${isTrainer ? '0d6efd' : 'dc3545'}&color=fff&size=150`;
+
+  const dateJoined = user.createdAt 
+    ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    : 'Recently Joined';
 
   return (
-    <div className="container-fluid p-3">
-      
-      {/* Top Header Card */}
-      <div className="card border-0 shadow-sm rounded-4 mb-4">
-        <div className="card-body p-4">
-          <div className="row align-items-center">
-            
-            {/* Left side: Avatar & Name */}
-            <div className="col-md-5 d-flex align-items-center mb-4 mb-md-0 border-end pe-4">
-              <img 
-                src={user.picture || `https://ui-avatars.com/api/?name=${user.name}&background=dc3545&color=fff&size=150`} 
-                alt="profile" 
-                className="rounded-circle shadow-sm me-4" 
-                style={{ width: '120px', height: '120px', objectFit: 'cover' }}
-              />
-              <div>
-                <h3 className="fw-bold mb-1 text-capitalize">{user.name}</h3>
-                <p className="text-muted small mb-1">{user.qualification}</p>
-                <p className="text-muted small mb-3">Learner at E-Study Zone</p>
-                <button className="btn btn-danger btn-sm px-4 rounded-pill" onClick={() => setActiveView('Edit Profile')}>Edit Profile</button>
-              </div>
-            </div>
-
-            {/* Right side: Basic Details List */}
-            <div className="col-md-7 ps-md-4">
-              <div className="row mb-2">
-                <div className="col-4 fw-bold text-secondary small">Enrollment ID:</div>
-                <div className="col-8 text-muted small font-monospace">{user._id}</div>
-              </div>
-              <div className="row mb-2">
-                <div className="col-4 fw-bold text-secondary small">Phone:</div>
-                <div className="col-8 text-muted small">{user.phone || 'Not provided'}</div>
-              </div>
-              <div className="row mb-2">
-                <div className="col-4 fw-bold text-secondary small">Email:</div>
-                <div className="col-8 text-danger small fw-bold">{user.email}</div>
-              </div>
-              <div className="row mb-2">
-                <div className="col-4 fw-bold text-secondary small">Date of Birth:</div>
-                <div className="col-8 text-muted small">{user.dob || 'Not provided'}</div>
-              </div>
-              <div className="row mb-2">
-                <div className="col-4 fw-bold text-secondary small">Address:</div>
-                <div className="col-8 text-muted small">{user.address || 'Not provided'}</div>
-              </div>
-              <div className="row mb-2">
-                <div className="col-4 fw-bold text-secondary small">Status:</div>
-                <div className="col-8 small fw-bold text-capitalize" style={{ color: user.status === 'active' ? '#198754' : '#dc3545' }}>
-                   {user.status}
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      {/* Grid for Additional Info Cards */}
-      <div className="row g-4">
+    <div className="container-fluid py-4" style={{maxWidth: '900px'}}>
+      <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
         
-        {/* Educational Information Card */}
-        <div className="col-md-6">
-          <div className="card border-0 shadow-sm rounded-4 h-100">
-            <div className="card-body p-4">
-              <h6 className="fw-bold mb-4 text-dark">Educational Information</h6>
+        {/* Dynamic Banner */}
+        <div className={`bg-${themeColor} opacity-75`} style={{ height: '100px' }}></div>
+        
+        <div className="card-body px-4 px-md-5 pb-5 pt-0">
+          
+          <div className="d-flex flex-column flex-sm-row justify-content-between mb-4 px-2">
+            <div className="d-flex flex-column flex-sm-row text-center text-sm-start align-items-center align-items-sm-end">
               
-              {/* Timeline Style Item 1 */}
-              <div className="d-flex position-relative mb-4">
-                <div className="border-start position-absolute h-100 ms-2" style={{ borderColor: '#dee2e6', top: '15px' }}></div>
-                <div className="rounded-circle bg-light border border-secondary" style={{ width: '15px', height: '15px', zIndex: 1, marginTop: '4px' }}></div>
-                <div className="ms-3">
-                  <h6 className="fw-bold mb-1 small text-dark">Highest Qualification</h6>
-                  <p className="text-muted small mb-1">{user.qualification}</p>
-                  <span className="text-muted extra-small">Added on Registration</span>
-                </div>
-              </div>
-
-              {/* Timeline Style Item 2 (Placeholder) */}
-              <div className="d-flex position-relative">
-                <div className="rounded-circle bg-light border border-secondary" style={{ width: '15px', height: '15px', zIndex: 1, marginTop: '4px' }}></div>
-                <div className="ms-3">
-                  <h6 className="fw-bold mb-1 small text-dark">Additional Details</h6>
-                  <p className="text-muted small mb-0">No Details Available</p>
-                </div>
+              {/* FIXED: Added position-relative and zIndex to pop it in front of the banner */}
+              <div className="position-relative rounded-circle bg-white p-1 shadow" style={{ marginTop: '-65px', width: '130px', height: '130px', zIndex: 10, flexShrink: 0 }}>
+                <img 
+                  src={profilePic} 
+                  alt="avatar" 
+                  className="rounded-circle w-100 h-100" 
+                  style={{ objectFit: 'cover' }} 
+                />
               </div>
               
-            </div>
-          </div>
-        </div>
-
-        {/* Certificate Details Card */}
-        <div className="col-md-6">
-          <div className="card border-0 shadow-sm rounded-4 h-100">
-            <div className="card-body p-4">
-              <h6 className="fw-bold mb-4 text-dark">Certificate Details</h6>
-              
-              <div className="d-flex position-relative mb-4">
-                 <div className="border-start position-absolute h-100 ms-2" style={{ borderColor: '#dee2e6', top: '15px' }}></div>
-                <div className="rounded-circle bg-light border border-secondary" style={{ width: '15px', height: '15px', zIndex: 1, marginTop: '4px' }}></div>
-                <div className="ms-3">
-                  <h6 className="fw-bold mb-1 small text-dark">Certificate Number</h6>
-                  <p className="text-muted small mb-0">No Details Available</p>
-                </div>
-              </div>
-
-              <div className="d-flex position-relative mb-4">
-                 <div className="border-start position-absolute h-100 ms-2" style={{ borderColor: '#dee2e6', top: '15px' }}></div>
-                <div className="rounded-circle bg-light border border-secondary" style={{ width: '15px', height: '15px', zIndex: 1, marginTop: '4px' }}></div>
-                <div className="ms-3">
-                  <h6 className="fw-bold mb-1 small text-dark">Grade</h6>
-                  <p className="text-muted small mb-0">No Details Available</p>
-                </div>
-              </div>
-
-              <div className="d-flex position-relative">
-                <div className="rounded-circle bg-light border border-secondary" style={{ width: '15px', height: '15px', zIndex: 1, marginTop: '4px' }}></div>
-                <div className="ms-3">
-                  <h6 className="fw-bold mb-1 small text-dark">Certification Date</h6>
-                  <p className="text-muted small mb-0">No Details Available</p>
-                </div>
+              <div className="ms-sm-4 mt-3 mt-sm-0 mb-sm-2">
+                <h3 className="fw-bold mb-1 text-capitalize text-dark">{user.name}</h3>
+                <span className={`badge bg-${themeColor} bg-opacity-10 text-${themeColor} border border-${themeColor} rounded-pill px-3 py-2 mt-1`}>
+                   {roleBadgeText}
+                </span>
               </div>
 
             </div>
-          </div>
-        </div>
 
+            <div className="mt-4 mt-sm-2 text-center text-sm-end">
+              <button className={`btn btn-outline-${themeColor} fw-bold rounded-pill px-4 shadow-sm`} onClick={() => setActiveView('Edit Profile')}>
+                <i className="bi bi-pencil-square me-2"></i>Edit Profile
+              </button>
+            </div>
+          </div>
+
+          {/* Details Grid */}
+          <div className="row g-4 mt-2">
+            <div className="col-md-6">
+              <div className="bg-light p-4 rounded-4 h-100">
+                <h6 className="fw-bold text-dark mb-4 border-bottom pb-2">Account Details</h6>
+                <div className="d-flex justify-content-between mb-3">
+                    <span className="text-muted small">Email</span> 
+                    <span className="fw-bold text-dark small text-truncate ms-3" style={{maxWidth: '200px'}}>{user.email}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-3"><span className="text-muted small">Phone</span> <span className="fw-bold text-dark small">{user.phone || '-'}</span></div>
+                <div className="d-flex justify-content-between mb-3"><span className="text-muted small">Date of Birth</span> <span className="fw-bold text-dark small">{user.dob || '-'}</span></div>
+                <div className="d-flex justify-content-between mb-3"><span className="text-muted small">Member Since</span> <span className="fw-bold text-dark small">{dateJoined}</span></div>
+                <div className="d-flex justify-content-between">
+                    <span className="text-muted small">System Status</span> 
+                    <span className={`badge text-capitalize ${user.status === 'active' ? 'bg-success' : 'bg-warning text-dark'}`}>{user.status}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div className="bg-light p-4 rounded-4 h-100">
+                <h6 className="fw-bold text-dark mb-4 border-bottom pb-2">Academic Profile</h6>
+                <div className="d-flex justify-content-between mb-3"><span className="text-muted small">Qualification</span> <span className="fw-bold text-dark small">{user.qualification}</span></div>
+                <div className="d-flex justify-content-between mb-3"><span className="text-muted small">High School</span> <span className="fw-bold text-dark small">{user.highSchool || '-'}</span></div>
+                <div className="d-flex justify-content-between mb-3"><span className="text-muted small">Board</span> <span className="fw-bold text-dark small text-uppercase">{user.board || '-'}</span></div>
+                <div className="d-flex justify-content-between mb-3"><span className="text-muted small">Father's Name</span> <span className="fw-bold text-dark small">{user.fatherName || '-'}</span></div>
+                <div className="d-flex justify-content-between"><span className="text-muted small">Location</span> <span className="fw-bold text-dark small text-end" style={{maxWidth: '150px'}}>{user.address ? `${user.address} ${user.pinCode}` : '-'}</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   );

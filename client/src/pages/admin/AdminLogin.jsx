@@ -1,64 +1,58 @@
-import React from 'react'
-import { Link, useNavigate } from 'react-router-dom';
-import '../../AuthPage.css';
-import logo from '../../assets/logo.webp'
-import { useState } from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const AdminLogin = () => {
+    const [credentials, setCredentials] = useState({ email: '', password: '' });
     const navigate = useNavigate();
-    const [data, setData] = useState({
-        email:'',
-        password:''
-    });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // For demonstration, we will just navigate to the admin dashboard on form submission.
-        // In a real application, you would validate the credentials here.
-        navigate('/AdminDashboard');
-    }
 
     const handleChange = (e) => {
-        setData(() => ({...data, [e.target.name]:e.target.value}))
-    }
+        setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    };
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await axios.post('http://localhost:5000/api/admin/login', credentials);
+            if (res.data.msg === "Login Successfully") {
+                localStorage.setItem("adminToken", res.data.data.token);
+                localStorage.setItem("id", res.data.data.id);
+                navigate('/admindashboard');
+            } else {
+                alert(res.data.msg);
+            }
+        } catch (error) {
+            alert("Server Error. Please try again.");
+        }
+    };
 
     return (
-        <div className='container-fluid auth-container p-0'>
-            <div className="row g-0 w-100">
-                <div className="col-sm-6 brand-section d-none d-md-flex">
-                        <img src={logo} alt="logo" className="brand-logo" />
-                        <h1 className="display-4 fw-bold">e-study-zone</h1>
-                        <p className="lead">Master your future with organized learning.</p>
-                        <img src="https://illustrations.popsy.co/white/studying.svg" alt="Study" className="illustration-img" />
-                        <footer className='footer mt-auto py-3 text-center '><Link className='text-white' to="/">User Login</Link></footer>
+        <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+            <div className="card border-0 shadow-lg rounded-4 p-4 p-md-5" style={{ maxWidth: '400px', width: '100%' }}>
+                <div className="text-center mb-4">
+                    <h3 className="fw-bold text-danger mb-1">E-Study Zone</h3>
+                    <p className="text-muted small fw-bold">ADMINISTRATION PORTAL</p>
+                </div>
+                
+                <form onSubmit={handleLogin}>
+                    <div className="form-floating mb-3">
+                        <input type="email" className="form-control bg-light border-0" id="adminEmail" name="email" placeholder="name@example.com" onChange={handleChange} required />
+                        <label htmlFor="adminEmail" className="text-muted">Admin Email</label>
                     </div>
-                {/* form */}
-                <div className="col-sm-6 form-section">
-                    <div className="auth-form-box">
-                        <div className="mb-4">
-                            <h2 className="fw-bold">Welcome Back Admin!</h2>
-                            <p className="text-muted">Enter your credentials to access your dashboard.</p>
-                        </div>
-
-                        <form onSubmit={handleSubmit}>
-                            <div className="mb-3">
-                                <label className="form-label small fw-bold text-uppercase">Email Address</label>
-                                <input type="email" value={data.email} name="email" className="form-control form-control-lg" placeholder="name@example.com" required onChange={handleChange}/>
-                            </div>
-                            <div className="mb-3">
-                                <div className="d-flex justify-content-between">
-                                    <label className="form-label small fw-bold text-uppercase">Password</label>
-                                </div>
-                                <input type="password" name="password" value={data.password} className="form-control form-control-lg" placeholder="••••••••" required onChange={handleChange}/>
-                            </div>
-                            <button type="submit" className="btn btn-danger btn-lg w-100 shadow-sm mt-2">Sign In</button>
-                        </form>
-
+                    <div className="form-floating mb-4">
+                        <input type="password" className="form-control bg-light border-0" id="adminPassword" name="password" placeholder="Password" onChange={handleChange} required />
+                        <label htmlFor="adminPassword" className="text-muted">Password</label>
                     </div>
+                    <button type="submit" className="btn btn-danger w-100 py-3 rounded-pill fw-bold shadow-sm mb-3">
+                        Secure Login
+                    </button>
+                </form>
+                <div className="text-center">
+                    <a href="/" className="text-decoration-none text-muted small"><i className="bi bi-arrow-left me-1"></i>Back to Main Site</a>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default AdminLogin
+export default AdminLogin;
