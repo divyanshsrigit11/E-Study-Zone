@@ -16,8 +16,9 @@ const Login = () => {
     const [forgotEmail, setForgotEmail] = useState('');
     const [captcha, setCaptcha] = useState({ num1: 0, num2: 0, answer: 0 });
     const [userCaptcha, setUserCaptcha] = useState('');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-    // Generate a simple Math Captcha to prevent bot spam
+    // Generating a simple Math Captcha to prevent bot spam
     const generateCaptcha = () => {
         const n1 = Math.floor(Math.random() * 10) + 1;
         const n2 = Math.floor(Math.random() * 10) + 1;
@@ -25,7 +26,7 @@ const Login = () => {
         setUserCaptcha('');
     };
 
-    // Regenerate captcha whenever the user switches to Forgot Password mode
+    // Regenerating captcha whenever the user switches to Forgot Password mode
     useEffect(() => {
         if (isForgotMode) generateCaptcha();
     }, [isForgotMode]);
@@ -39,7 +40,7 @@ const Login = () => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            const res = await axios.post('http://localhost:5000/api/user/login', credentials);
+            const res = await axios.post(`${API_URL}/api/user/login`, credentials);
             
             if (res.data.msg === "Login Successfully") {
                 localStorage.setItem("token", res.data.data.token);
@@ -74,7 +75,7 @@ const Login = () => {
         setIsSubmitting(true);
         try {
             // This expects a backend route that generates a JWT and emails a one-time login link
-            const res = await axios.post('http://localhost:5000/api/password/forgot-password', { email: forgotEmail });            
+            const res = await axios.post(`${API_URL}/api/password/forgot-password`, { email: forgotEmail });            
             alert(res.data.msg || "If an account exists, a recovery link has been sent.");
             
             // Reset and go back to login screen

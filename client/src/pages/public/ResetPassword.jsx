@@ -4,8 +4,9 @@ import axios from 'axios';
 import '../../AuthPage.css';
 
 const ResetPassword = () => {
-    const { id, token } = useParams(); // Grabs the dynamic URL parameters
+    const { id, token } = useParams(); 
     const navigate = useNavigate();
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
     const [passwords, setPasswords] = useState({ password: '', confirmPassword: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,8 +24,8 @@ const ResetPassword = () => {
 
         setIsSubmitting(true);
         try {
-            // Hit the backend with the ID, Token, and New Password
-            const res = await axios.post(`http://localhost:5000/api/password/reset-password/${id}/${token}`, {
+            // hitting the backend route to reset password using the id and token from the URL
+            const res = await axios.post(`${API_URL}/api/password/reset-password/${id}/${token}`, {
                 newPassword: passwords.password
             });
 

@@ -9,6 +9,8 @@ import axios from 'axios';
 const Register = () => {
     const [showTerms, setShowTerms] = useState(false);
     const [termsChecked, setTermsChecked] = useState(false); // Controlled checkbox
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
     const [data, setData] = useState({
         name: '',
         email: '',
@@ -24,7 +26,7 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const res = await axios.post('http://localhost:5000/api/user/register', data);
+            const res = await axios.post(`${API_URL}/api/user/register`, data);
             
             if (res.data.msg === "User already Registered") {
                 alert(res.data.msg);
@@ -39,7 +41,7 @@ const Register = () => {
                     qualification: QUALIFICATIONS[0],
                     role: ROLES[0]
                 });
-                setTermsChecked(false); // Uncheck the box
+                setTermsChecked(false); // to uncheck the box
             }
         } catch(er) {
             console.log(er);
