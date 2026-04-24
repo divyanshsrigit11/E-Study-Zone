@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const cluster = require('cluster');
 const os = require('os');
 const MongoDB = require('./config/db');
+const helmet = require('helmet');
+const compression = require('compression');
 
 dotenv.config();
 
@@ -33,6 +35,8 @@ if (cluster.isPrimary) {
         credentials: true
     }));
     app.use(express.json());
+    app.use(helmet()); 
+    app.use(compression());
     
     MongoDB();
 
