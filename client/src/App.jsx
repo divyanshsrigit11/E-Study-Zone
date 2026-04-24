@@ -7,7 +7,7 @@ import Register from './pages/public/Register';
 import TrainerDashboard from './pages/trainer/trainerDashboard'; 
 import UserDashboard from './pages/user/userDashboard';
 import AdminLogin from './pages/admin/AdminLogin';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDashboard from './pages/admin/adminDashboard'; 
 import ResetPassword from './pages/public/ResetPassword';
 
 const App = () => {
