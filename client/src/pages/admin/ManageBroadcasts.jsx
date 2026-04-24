@@ -6,10 +6,11 @@ const ManageBroadcasts = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const fetchHistory = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/notifications');
+      const res = await axios.get(`${API_URL}/api/admin/notifications`);
       setHistory(res.data.data);
     } catch (error) {
       console.error(error);
@@ -18,13 +19,13 @@ const ManageBroadcasts = () => {
     }
   };
 
-  useEffect(() => { fetchHistory(); }, []);
+  useEffect(() => { fetchHistory(); }, [API_URL]);
 
   const handleSendBroadcast = async () => {
     if (!message.trim()) return;
     setIsSending(true);
     try {
-      await axios.post('http://localhost:5000/api/admin/broadcast', { message });
+      await axios.post(`${API_URL}/api/admin/broadcast`, { message });
       alert("Broadcast sent successfully to all users!");
       setMessage(""); 
       fetchHistory(); 
@@ -40,7 +41,6 @@ const ManageBroadcasts = () => {
       </div>
 
       <div className="row g-4">
-        {/* COMPOSER SECTION */}
         <div className="col-lg-5">
           <div className="card border-0 shadow-sm rounded-4 h-100">
             <div className="card-header bg-white p-4 border-bottom-0">
@@ -74,7 +74,6 @@ const ManageBroadcasts = () => {
           </div>
         </div>
 
-        {/* HISTORY SECTION */}
         <div className="col-lg-7">
           <div className="card border-0 shadow-sm rounded-4 h-100">
             <div className="card-header bg-white p-4 border-bottom-0">

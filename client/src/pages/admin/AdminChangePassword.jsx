@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const AdminChangePassword = () => {
     const adminId = localStorage.getItem("id");
     const navigate = useNavigate();
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const [passwords, setPasswords] = useState({
         oldPassword: '',
         newPassword: '',
@@ -18,7 +19,7 @@ const AdminChangePassword = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post(`http://localhost:5000/api/admin/change-password/${adminId}`, passwords);
+            const res = await axios.post(`${API_URL}/api/admin/change-password/${adminId}`, passwords);
             alert(res.data.msg);
             if(res.data.msg === "Password changed successfully") {
                 localStorage.clear();

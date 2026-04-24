@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; 
 
-// Imported all components, including AdminChangePassword
 import ManageUsers from './ManageUsers';
 import ManageLearners from './ManageLearners';
 import DashboardOverview from './DashboardOverview';
@@ -16,7 +15,6 @@ const AdminDashboard = () => {
     const [activeView, setActiveView] = useState('Dashboard Overview'); 
     const navigate = useNavigate();
 
-    // Safely clears all local storage (tokens, ids) and routes back to the landing page
     const handleLogout = () => {
       localStorage.clear();
       navigate('/'); 
@@ -29,13 +27,12 @@ const AdminDashboard = () => {
       { name: 'Content Moderation', icon: 'bi-shield-check' },
       { name: 'Broadcasts', icon: 'bi-broadcast-pin' },
       { name: 'System Settings', icon: 'bi-gear-fill' },
-      { name: 'Change Password', icon: 'bi-key-fill' } // Restored menu item
+      { name: 'Change Password', icon: 'bi-key-fill' }
     ];
 
   return (
     <div className="dashboard-wrapper d-flex" style={{ height: '100vh', overflow: 'hidden' }}>
       
-      {/* SIDEBAR */}
       <div className={`sidebar bg-dark text-white d-flex flex-column transition-all flex-shrink-0 ${collapsed ? 'collapsed' : ''}`} style={{ width: collapsed ? '80px' : '260px', transition: 'width 0.3s' }}>
         <div className="p-4 text-center border-bottom border-secondary d-flex justify-content-between align-items-center">
           <h5 className={`mb-0 fw-bold text-danger ${collapsed ? 'd-none' : ''}`}>ADMIN PANEL</h5>
@@ -58,17 +55,14 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* LOGOUT BUTTON */}
         <div className="p-4 mt-auto border-top border-secondary text-white-50 d-flex align-items-center transition-hover" style={{ cursor: 'pointer' }} onClick={handleLogout}>
           <i className={`bi bi-box-arrow-right fs-5 ${collapsed ? 'mx-auto text-danger' : 'me-3 text-danger'}`}></i>
           <span className={`fw-bold ${collapsed ? 'd-none' : ''}`}>Secure Logout</span>
         </div>
       </div>
 
-      {/* MAIN CONTENT AREA */}
       <div className="main-content flex-grow-1 bg-light d-flex flex-column" style={{ overflowY: 'auto' }}>
         
-        {/* NAVBAR */}
         <nav className="navbar navbar-light bg-white shadow-sm px-4 py-3 d-flex justify-content-between flex-shrink-0">
           <span className="navbar-brand mb-0 h4 fw-bold text-dark">E-Study Zone <span className="text-danger">Admin Control</span></span>
           <div className="d-flex align-items-center">
@@ -82,7 +76,6 @@ const AdminDashboard = () => {
           </div>
         </nav>
         
-        {/* RENDERED COMPONENTS */}
         <div className="p-4 flex-grow-1">
           {activeView === 'Dashboard Overview' && <DashboardOverview />}
           {activeView === 'Manage Trainers' && <ManageUsers />}
@@ -90,7 +83,7 @@ const AdminDashboard = () => {
           {activeView === 'Content Moderation' && <ContentModeration />}
           {activeView === 'Broadcasts' && <ManageBroadcasts />}
           {activeView === 'System Settings' && <SystemSettings />}
-          {activeView === 'Change Password' && <AdminChangePassword />} {/* Restored render block */}
+          {activeView === 'Change Password' && <AdminChangePassword />}
         </div>
       </div>
     </div>

@@ -5,10 +5,11 @@ const ContentModeration = () => {
   const [allContent, setAllContent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const fetchAllContent = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/content/all');
+      const res = await axios.get(`${API_URL}/api/admin/content/all`);
       setAllContent(res.data.data);
     } catch (error) {
       console.error("Failed to fetch all content", error);
@@ -20,7 +21,7 @@ const ContentModeration = () => {
   const handleHideContent = async (contentId) => {
     if(!window.confirm("Are you sure you want to block this file? Learners will no longer see it.")) return;
     try {
-      const res = await axios.put(`http://localhost:5000/api/admin/content/hide/${contentId}`);
+      const res = await axios.put(`${API_URL}/api/admin/content/hide/${contentId}`);
       alert(res.data.msg);
       fetchAllContent(); 
     } catch (error) { alert("Failed to hide content"); }
@@ -29,7 +30,7 @@ const ContentModeration = () => {
   const handleRestoreContent = async (contentId) => {
     if(!window.confirm("Restore this content? It will be published live immediately.")) return;
     try {
-      const res = await axios.put(`http://localhost:5000/api/admin/content/unhide/${contentId}`);
+      const res = await axios.put(`${API_URL}/api/admin/content/unhide/${contentId}`);
       alert(res.data.msg);
       fetchAllContent(); 
     } catch (error) { alert("Failed to restore content"); }
@@ -78,7 +79,7 @@ const ContentModeration = () => {
                       <td className="ps-4 text-primary small fw-bold">
                         <i className="bi bi-file-earmark-text me-2 text-muted"></i> 
                         <a 
-                          href={content.file.startsWith('http') ? content.file : `http://localhost:5000/uploads/${content.file}`} 
+                          href={content.file.startsWith('http') ? content.file : `${API_URL}/uploads/${content.file}`} 
                           target="_blank" 
                           rel="noreferrer" 
                           className="text-decoration-none"

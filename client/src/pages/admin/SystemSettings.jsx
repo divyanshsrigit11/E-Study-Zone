@@ -4,22 +4,23 @@ import axios from 'axios';
 const SystemSettings = () => {
   const [settings, setSettings] = useState({ maintenanceMode: false, platformName: '' });
   const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/admin/settings');
+        const res = await axios.get(`${API_URL}/api/admin/settings`);
         setSettings(res.data.data);
       } catch (error) {
         console.error(error);
       } finally { setLoading(false); }
     };
     fetchSettings();
-  }, []);
+  }, [API_URL]);
 
   const handleSave = async () => {
     try {
-      const res = await axios.put('http://localhost:5000/api/admin/settings', settings);
+      const res = await axios.put(`${API_URL}/api/admin/settings`, settings);
       alert(res.data.msg);
     } catch (error) {
       alert("Failed to save settings.");

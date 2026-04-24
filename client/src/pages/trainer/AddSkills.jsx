@@ -6,10 +6,11 @@ const AddSkills = () => {
   const [newSkill, setNewSkill] = useState({ name: '', description: '' });
   const [loading, setLoading] = useState(true);
   const userId = localStorage.getItem("id");
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const fetchSkills = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/user/skills/${userId}`);
+      const res = await axios.get(`${API_URL}/api/user/skills/${userId}`);
       setSkills(res.data);
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
@@ -19,7 +20,7 @@ const AddSkills = () => {
   const handleAddSkill = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`http://localhost:5000/api/user/skills/${userId}`, newSkill);
+      await axios.post(`${API_URL}/api/user/skills/${userId}`, newSkill);
       setNewSkill({ name: '', description: '' });
       fetchSkills();
     } catch (error) { alert("Failed to add skill"); }
@@ -27,7 +28,7 @@ const AddSkills = () => {
 
   const handleToggleStatus = async (skillId) => {
     try {
-      await axios.patch(`http://localhost:5000/api/user/skills/${userId}/${skillId}/toggle`);
+      await axios.patch(`${API_URL}/api/user/skills/${userId}/${skillId}/toggle`);
       fetchSkills();
     } catch (error) { alert("Failed to toggle status"); }
   };
@@ -35,7 +36,7 @@ const AddSkills = () => {
   const handleDelete = async (skillId) => {
     if (!window.confirm("Are you sure you want to delete this skill?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/user/skills/${userId}/${skillId}`);
+      await axios.delete(`${API_URL}/api/user/skills/${userId}/${skillId}`);
       fetchSkills();
     } catch (error) { alert("Failed to delete skill"); }
   };

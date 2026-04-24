@@ -4,10 +4,11 @@ import axios from 'axios';
 const HandshakeRequest = () => {
     const trainerId = localStorage.getItem('id');
     const [requests, setRequests] = useState([]);
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
     const fetchRequests = async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/user/handshake/trainer/${trainerId}`);
+            const res = await axios.get(`${API_URL}/api/user/handshake/trainer/${trainerId}`);
             setRequests(res.data.data);
         } catch (error) { console.error("Fetch failed", error); }
     };
@@ -16,7 +17,7 @@ const HandshakeRequest = () => {
 
     const updateStatus = async (id, status) => {
         try {
-            await axios.put(`http://localhost:5000/api/user/handshake/update/${id}`, { status });
+            await axios.put(`${API_URL}/api/user/handshake/update/${id}`, { status });
             alert(`Request ${status}!`);
             fetchRequests();
         } catch (error) { alert("Failed to update status."); }

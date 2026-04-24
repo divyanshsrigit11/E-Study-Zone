@@ -12,11 +12,12 @@ const DashboardOverview = () => {
     latestContent: []
   });
   const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/admin/dashboard-stats');
+        const res = await axios.get(`${API_URL}/api/admin/dashboard-stats`);
         setStatsData(res.data.data);
       } catch (error) {
         console.error("Failed to fetch stats", error);
@@ -25,7 +26,7 @@ const DashboardOverview = () => {
       }
     };
     fetchStats();
-  }, []);
+  }, [API_URL]);
 
   const stats = [
     { title: 'Total Learners', count: statsData.totalLearners, icon: 'bi-mortarboard', color: 'primary' },

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const AdminLogin = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
     const navigate = useNavigate();
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
     const handleChange = (e) => {
         setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -13,7 +14,7 @@ const AdminLogin = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:5000/api/admin/login', credentials);
+            const res = await axios.post(`${API_URL}/api/admin/login`, credentials);
             if (res.data.msg === "Login Successfully") {
                 localStorage.setItem("adminToken", res.data.data.token);
                 localStorage.setItem("id", res.data.data.id);

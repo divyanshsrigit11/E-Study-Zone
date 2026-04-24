@@ -8,12 +8,13 @@ const AddContent = () => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const userId = localStorage.getItem("id");
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const fetchData = async () => {
     try {
-      const skillRes = await axios.get(`http://localhost:5000/api/user/skills/${userId}`);
+      const skillRes = await axios.get(`${API_URL}/api/user/skills/${userId}`);
       setSkills(skillRes.data.filter(s => s.status === 'active'));
-      const contentRes = await axios.get(`http://localhost:5000/api/user/content/trainer/${userId}`);
+      const contentRes = await axios.get(`${API_URL}/api/user/content/trainer/${userId}`);
       setContents(contentRes.data.data);
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
@@ -30,7 +31,7 @@ const AddContent = () => {
     data.append('file', file);
 
     try {
-      await axios.post(`http://localhost:5000/api/user/content/add/${userId}`, data, {
+      await axios.post(`${API_URL}/api/user/content/add/${userId}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       alert("Content uploaded successfully!");
@@ -41,7 +42,7 @@ const AddContent = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await axios.put(`http://localhost:5000/api/user/content/status/${id}`, { status: newStatus });
+      await axios.put(`${API_URL}/api/user/content/status/${id}`, { status: newStatus });
       fetchData();
     } catch (error) { alert("Failed to change status."); }
   };
@@ -49,7 +50,7 @@ const AddContent = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this content permanently?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/user/content/${id}`);
+      await axios.delete(`${API_URL}/api/user/content/${id}`);
       fetchData();
     } catch (error) { alert("Failed to delete."); }
   };
@@ -103,7 +104,7 @@ const AddContent = () => {
                 <tr key={c._id}>
                   <td className="ps-4 fw-bold text-dark">
                     <a 
-                      href={c.file.startsWith('http') ? c.file : `http://localhost:5000/uploads/${c.file}`} 
+                      href={c.file.startsWith('http') ? c.file : `${API_URL}/uploads/${c.file}`} 
                       target="_blank" 
                       rel="noreferrer" 
                       className="text-decoration-none text-primary"

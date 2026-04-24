@@ -4,10 +4,11 @@ import axios from 'axios';
 const ManageLearners = () => {
   const [learners, setLearners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const fetchLearners = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/learners');
+      const res = await axios.get(`${API_URL}/api/admin/learners`);
       setLearners(res.data.data);
     } catch (error) {
       console.error("Failed to fetch learners", error);
@@ -18,12 +19,12 @@ const ManageLearners = () => {
 
   useEffect(() => {
     fetchLearners();
-  }, []);
+  }, [API_URL]);
 
   const handleStatusChange = async (userId, currentStatus) => {
     try {
       const route = currentStatus === 'active' ? 'block' : 'unblock';
-      const res = await axios.get(`http://localhost:5000/api/admin/${route}/${userId}`);
+      const res = await axios.get(`${API_URL}/api/admin/${route}/${userId}`);
       alert(res.data.msg);
       fetchLearners(); 
     } catch (error) {
