@@ -28,33 +28,3 @@ const App = () => {
 }
 
 export default App;
-
-// import React from 'react'
-// import {BrowserRouter, Routes, Route} from "react-router-dom"
-// import { lazy, Suspense } from "react"
-// const Login = lazy(() => import('./pages/public/Login'))
-// const Register = lazy(() => import('./pages/public/Register'))
-// const TrainerDashboard = lazy(() => import('./pages/trainer/trainerDashboard'))
-// const UserDashboard = lazy(() => import('./pages/user/userDashboard'))
-// const App = () => {
-//   return (
-//     <>
-//       <BrowserRouter>
-//         <Suspense fallback={<div>...Loading</div>}>
-//           <Routes>
-//             <Route path="/" element={<Login/>}></Route>
-//             <Route path="/register" element={<Register/>}></Route>
-//             {/* admin route */}
-//             <Route path='/adminDashboard'></Route>
-//             {/* trainer dashboard */}
-//             <Route path='/trainerdashboard' element={<TrainerDashboard/>}></Route>
-//             {/* user dashboard */}
-//             <Route path="/userdashboard" elememnt={<UserDashboard/>}></Route>
-//           </Routes>
-//         </Suspense>
-//       </BrowserRouter>
-//     </>
-//   )
-// }
-
-// export default App
