@@ -31,7 +31,11 @@ if (cluster.isPrimary) {
     // Everything in this block runs on multiple CPU cores simultaneously
     const app = express();
     app.use(cors({
-        origin: ['http://localhost:5173', 'here'], // Add Vercel URL, must remember!!
+        origin: [
+            'http://localhost:5173',                   
+            /\.vercel\.app$/,                          
+            'https://e-study-zone.vercel.app'         
+        ],
         credentials: true
     }));
     app.use(express.json());
