@@ -1,4 +1,4 @@
-// clusturing in nodeJS
+// clusturing in nodeJS - figuring out
 const cluster = require('cluster');
 const os = require('os');
 
@@ -13,7 +13,7 @@ if (cluster.isMaster) {
         cluster.fork();
     });
 } else {
-    require('./index'); // Assuming your server code is in index.js
+    require('./index'); 
 }
 
 console.log("This is the main thread");

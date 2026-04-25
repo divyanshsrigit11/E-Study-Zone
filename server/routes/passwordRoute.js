@@ -8,7 +8,7 @@ const sendEmail = require('../utils/sendEmail');
 // rate limiter for forgot password route
 const rateLimit = require('express-rate-limit');
 
-// 1. Define the specific limiter for authentication/emails
+// defining the specific limiter for authentication/emails
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
     max: 5,
@@ -16,7 +16,7 @@ const authLimiter = rateLimit({
 });
 
 // ==========================================
-// 1. FORGOT PASSWORD (Send Email)
+// FORGOT PASSWORD (Send Email)
 // ==========================================
 router.post('/forgot-password', authLimiter, async (req, res) => {
     try {
@@ -70,30 +70,30 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
 });
 
 // ==========================================
-// 2. RESET PASSWORD (Save New Password)
+// RESET PASSWORD (Save New Password)
 // ==========================================
 router.post('/reset-password/:id/:token', async (req, res) => {
     const { id, token } = req.params;
     const { newPassword } = req.body;
 
     try {
-        // 1. Find the user to get their current password for the secret
+        // Find the user to get their current password for the secret
         const user = await User.findById(id);
         if (!user) {
             return res.status(404).json({ msg: "User not found." });
         }
 
-        // 2. Re-create the exact secret used to verify the email token
+        // Re-create the exact secret used to verify the email token
         const secret = process.env.JWT_SECRET + user.password;
 
-        // 3. Verify the token (Throws error if expired or altered)
+        // Verify the token (Throws error if expired or altered)
         try {
             jwt.verify(token, secret);
         } catch (err) {
             return res.status(400).json({ msg: "Reset link is invalid or has expired. Please request a new one." });
         }
 
-        // 4. THE BULLETPROOF FIX: Force MongoDB to update the field directly!
+        // THE BULLETPROOF FIX: Force MongoDB to update the field directly!
         await User.findByIdAndUpdate(id, { password: newPassword });
 
         res.json({ status: "success", msg: "Password successfully updated! You can now log in." });

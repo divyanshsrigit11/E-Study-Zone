@@ -82,24 +82,33 @@ routes.get('/notifications', async (req, res) => {
 routes.post('/register', authLimiter, async(req, res) => {
     try {
         const {name, email, password, qualification, role} = req.body;
-        const user = await User.findOne({email:email});
+        
+        const user = await User.findOne({email: email});
         if(user) {
-            return res.json({msg: "User already Registered"})
+            return res.json({msg: "User already Registered"});
         }
 
-        // SECURITY LOCK: Trainers default to 'inactive' (require admin approval). Learners default to 'active'.
+        const salt = await bcrypt.genSalt(10);
+        
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         const initialStatus = role === 'Trainer' ? 'inactive' : 'active';
 
-        const data = await new User({
-            name, email, password, qualification, role, 
-            status: initialStatus // Injecting the lock here
-        })
+        const data = new User({
+            name, 
+            email, 
+            password: hashedPassword,
+            qualification, 
+            role, 
+            status: initialStatus
+        });
+
         await data.save();
-        res.json({msg: "User Registered Successfully"})
+        res.json({msg: "User Registered Successfully"});
     }
     catch(er) {
         console.log(er);
-        res.json({msg: "User Not Registered"}) 
+        res.json({msg: "User Not Registered"});
     }
 });
 
