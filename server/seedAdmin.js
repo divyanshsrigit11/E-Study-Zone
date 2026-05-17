@@ -1,23 +1,20 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const User = require('./models/User'); // Path to your User model
+const Admin = require('./models/Admin');
 require('dotenv').config();
 
 const seedAdmin = async () => {
     await mongoose.connect(process.env.MONGO_URI);
-    
-    const hashedPassword = await bcrypt.hash("superAdmin@123", 10);
-    
-    const admin = new User({
-        name: "Super Admin",
-        email: "admin@estudyzone.com",
-        password: hashedPassword,
-        role: "Admin",
-        status: "active"
-    });
 
-    await admin.save();
-    console.log("Admin created successfully!");
+    const email = "admin@estudyzone.com";
+    const hashedPassword = await bcrypt.hash("superAdmin@123", 10);
+
+    await Admin.findOneAndUpdate(
+        { email },
+        { password: hashedPassword },
+        { upsert: true, new: true }
+    );
+    console.log("Admin upserted with encrypted password!");
     process.exit();
 };
 

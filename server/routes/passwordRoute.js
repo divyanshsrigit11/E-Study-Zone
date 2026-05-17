@@ -93,8 +93,9 @@ router.post('/reset-password/:id/:token', async (req, res) => {
             return res.status(400).json({ msg: "Reset link is invalid or has expired. Please request a new one." });
         }
 
-        // THE BULLETPROOF FIX: Force MongoDB to update the field directly!
-        await User.findByIdAndUpdate(id, { password: newPassword });
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        await User.findByIdAndUpdate(id, { password: hashedPassword });
 
         res.json({ status: "success", msg: "Password successfully updated! You can now log in." });
 

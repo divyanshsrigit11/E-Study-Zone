@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const SearchContent = () => {
@@ -8,6 +8,25 @@ const SearchContent = () => {
     const learnerId = localStorage.getItem('id');
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+    useEffect(() => {
+        if (!query.trim()) {
+            setResults([]);
+            return;
+        }
+        const debounce = setTimeout(async () => {
+            setLoading(true);
+            try {
+                const res = await axios.get(`${API_URL}/api/user/trainers/search?q=${query}`);
+                setResults(res.data.data);
+            } catch (error) {
+                console.error("Search failed", error);
+            } finally {
+                setLoading(false);
+            }
+        }, 400);
+        return () => clearTimeout(debounce);
+    }, [query]);
+
     const handleSearch = async (e) => {
         e.preventDefault();
         if (!query.trim()) return;
@@ -15,10 +34,10 @@ const SearchContent = () => {
         try {
             const res = await axios.get(`${API_URL}/api/user/trainers/search?q=${query}`);
             setResults(res.data.data);
-        } catch (error) { 
-            console.error("Search failed", error); 
-        } finally { 
-            setLoading(false); 
+        } catch (error) {
+            console.error("Search failed", error);
+        } finally {
+            setLoading(false);
         }
     };
 

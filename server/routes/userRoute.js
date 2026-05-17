@@ -299,14 +299,18 @@ routes.post('/change-password/:id', async (req, res) => {
 
         if (!user) return res.status(404).json({ msg: "User not found" });
 
-        if (user.password !== oldPassword) {
+        const isMatch = user.password.startsWith('$2')
+            ? await bcrypt.compare(oldPassword, user.password)
+            : oldPassword === user.password;
+        if (!isMatch) {
             return res.status(400).json({ msg: "Old password is incorrect" });
         } else if (newPassword !== confirmPassword) {
             return res.status(400).json({ msg: "New password and Confirm password do not match" });
         } else if (oldPassword === newPassword) {
             return res.status(400).json({ msg: "New password cannot be the same as old password" });
         } else {
-            user.password = newPassword;
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(newPassword, salt);
             await user.save();
             return res.status(200).json({ msg: "Password changed successfully" });
         }

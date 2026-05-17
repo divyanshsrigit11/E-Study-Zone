@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e 'const bcrypt = require\\('\\\\''bcryptjs'\\\\''\\); bcrypt.compare\\('\\\\''Admin@esz123'\\\\'', '\\\\''$2b$10$GJGa/n8bxu36B8JsgkT0cO7ruXEaMvhWzDbTU8PjsM1YvR9mhPdKy'\\\\''\\).then\\(r => console.log\\('\\\\''match:'\\\\'', r\\)\\)')"
+    ]
+  }
+}
